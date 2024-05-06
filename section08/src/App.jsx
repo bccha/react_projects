@@ -1,52 +1,90 @@
 import "./App.css";
 
-import { useRef, useState } from "react";
+import {
+  useRef,
+  useState,
+  useReducer,
+  useCallback,
+  createContext,
+  useMemo,
+} from "react";
 
 import Editor from "./components/Editor";
 import Header from "./components/Header";
 import List from "./components/List";
+//import Exam from "./components/Exam";
+
+const actionMap = {
+  add: (todo, data) => [
+    ...todo,
+    { ...data, done: false, date: new Date().toDateString() },
+  ],
+
+  change: (todo, data) =>
+    todo.map((t) => {
+      if (t.key == data) {
+        return { ...t, done: !t.done };
+      }
+      return t;
+    }),
+
+  del: (todo, data) => todo.filter((t) => t.key != data),
+};
+
+const todoReducer = (todos, action) => {
+  if (!(action.action in actionMap)) {
+    return todos;
+  }
+  return actionMap[action.action](todos, action.data);
+};
+
+export const TodoContext = createContext();
+export const TodoFnContext = createContext();
 
 function App() {
-  const [todos, setTodos] = useState([]);
+  const [todos, dispatchTodos] = useReducer(todoReducer, []);
   const idRef = useRef(0);
 
-  const addItem = (todo) => {
-    const date = new Date();
-    const newTodos = [
-      ...todos,
-      {
+  const addItem = useCallback((todo) => {
+    dispatchTodos({
+      action: "add",
+      data: {
         key: idRef.current++,
-        done: false,
         content: todo,
-        date: date.toLocaleDateString(),
       },
-    ];
-    setTodos(newTodos);
-  };
-
-  const changeItem = (todo) => {
-    setTodos(
-      todos.map((t) => {
-        if (t.key == todo.key) {
-          t.done = todo.done;
-        }
-        return t;
-      })
-    );
-  };
-
-  const delItem = (key) => {
-    const newTodos = todos.filter((i) => {
-      return i.key != key;
     });
-    setTodos(newTodos);
-  };
+  }, []);
+
+  const changeItem = useCallback((todo) => {
+    dispatchTodos({
+      action: "change",
+      data: todo.key,
+    });
+  }, []);
+
+  const delItem = useCallback((key) => {
+    dispatchTodos({
+      action: "del",
+      data: key,
+    });
+  }, []);
+
+  const memoDispatch = useMemo(() => {
+    return { addItem, changeItem, delItem };
+  }, []);
 
   return (
     <div className="App">
+      {/*
+      <Exam />
+      */}
       <Header />
-      <Editor addItem={addItem} />
-      <List todos={todos} delItem={delItem} changeItem={changeItem} />
+      <TodoContext.Provider value={todos}>
+        <TodoFnContext.Provider value={memoDispatch}>
+          <Editor />
+          <List />
+        </TodoFnContext.Provider>
+      </TodoContext.Provider>
     </div>
   );
 }

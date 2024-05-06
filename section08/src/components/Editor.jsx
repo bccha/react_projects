@@ -1,7 +1,9 @@
+import { TodoFnContext } from "../App";
 import "./Editor.css";
-import { useRef, useState } from "react";
+import { useRef, useState, useContext } from "react";
 
-const Editor = ({ addItem }) => {
+const Editor = () => {
+  const { addItem } = useContext(TodoFnContext);
   const [newItem, setNewItem] = useState("");
   const currentRef = useRef();
 

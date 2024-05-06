@@ -1,14 +1,15 @@
 import "./TodoItem.css";
-import { useState } from "react";
+import { memo, useContext } from "react";
+import { TodoFnContext } from "../App";
 
-const TodoItem = ({ todo, delItem, changeItem }) => {
+const TodoItem = ({ todo }) => {
+  const { changeItem, delItem } = useContext(TodoFnContext);
   return (
     <div className="TodoItem">
       <input
         type="checkbox"
         checked={todo.done}
         onChange={() => {
-          todo.done = !todo.done;
           changeItem(todo);
         }}
       />{" "}
@@ -25,4 +26,10 @@ const TodoItem = ({ todo, delItem, changeItem }) => {
   );
 };
 
-export default TodoItem;
+/*
+export default memo(
+  TodoItem,
+  (curProps, nextProps) => curProps.todo.done === nextProps.todo.done
+);
+*/
+export default memo(TodoItem);
